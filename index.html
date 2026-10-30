@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="theme-color" content="#eef6ee">
-<title>Nirob AI — বাংলায় AI চ্যাট</title>
+<title>Nirob AI — Personal AI Assistant</title>
 <style>
 :root{
   --bg:#eef6ee;--ink:#14231a;--muted:#5b6f62;--glass:rgba(255,255,255,.55);
@@ -19,7 +19,7 @@ body.dark{
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%}
-body{font-family:"Hind Siliguri","Noto Sans Bengali",system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--ink);overflow:hidden;-webkit-font-smoothing:antialiased}
+body{font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--ink);overflow:hidden;-webkit-font-smoothing:antialiased}
 button{font:inherit}
 .blob{position:fixed;border-radius:50%;filter:blur(70px);opacity:.55;z-index:0;pointer-events:none}
 .blob.g{width:46vmax;height:46vmax;background:#8fe3ae;top:-14vmax;left:-10vmax}
@@ -86,27 +86,27 @@ header h1{font-size:19px;line-height:1.1}header p{font-size:12px;color:var(--mut
 <div class="blob g"></div><div class="blob a"></div><div class="blob t"></div>
 <div id="app">
   <header class="glass">
-    <button class="icon-btn" id="menuBtn" aria-label="মেনু">☰</button>
+    <button class="icon-btn" id="menuBtn" aria-label="Open chat history">☰</button>
     <div class="logo">N</div>
-    <div><h1>Nirob AI</h1><p>বাংলায় AI চ্যাট সহায়ক · Gemini</p></div>
+    <div><h1>Nirob AI</h1><p>Your personal AI assistant</p></div>
     <div class="spacer"></div>
-    <button class="icon-btn" id="themeBtn" aria-label="থিম বদলাও">🌙</button>
+    <button class="icon-btn" id="themeBtn" aria-label="Toggle theme">🌙</button>
   </header>
   <main id="chat" aria-live="polite"></main>
   <div id="note"></div>
   <form id="composer">
-    <button type="button" class="icon-btn" id="micBtn" aria-label="ভয়েস টাইপ">🎤</button>
+    <button type="button" class="icon-btn" id="micBtn" aria-label="Voice input">🎤</button>
     <div class="eq" id="eq"><i></i><i></i><i></i><i></i></div>
-    <textarea id="input" rows="1" placeholder="এখানে লেখো, Nirob…"></textarea>
-    <button type="submit" class="icon-btn" id="sendBtn" aria-label="পাঠাও">➤</button>
+    <textarea id="input" rows="1" placeholder="Message Nirob AI..."></textarea>
+    <button type="submit" class="icon-btn" id="sendBtn" aria-label="Send message">➤</button>
   </form>
 </div>
 <div id="scrim"></div>
 <aside id="drawer" class="glass">
-  <h2>💬 চ্যাট ইতিহাস</h2>
-  <button id="newBtn">＋ নতুন চ্যাট</button>
+  <h2>💬 Chat history</h2>
+  <button id="newBtn">＋ New chat</button>
   <div id="chatList"></div>
-  <div class="status glass"><span class="dot"></span><b>Gemini 3.8 Flash</b><br>API key সার্ভারে নিরাপদে রাখতে হবে।</div>
+  <div class="status glass"><span class="dot"></span><b>Nirob AI</b><br>Your personal assistant. Chat history is saved in this browser.</div>
 </aside>
 <script>
 "use strict";
@@ -116,7 +116,7 @@ const LS_KEY="nirob-ai-html-chats-v2",LS_THEME="nirob-ai-html-theme";
 let chats=[],currentId=null,busy=false,speaking=false,recog=null,listening=false,micStream=null;
 
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
-function save(){try{localStorage.setItem(LS_KEY,JSON.stringify(chats))}catch(e){setNote("চ্যাট সংরক্ষণ করা যায়নি।",true)}}
+function save(){try{localStorage.setItem(LS_KEY,JSON.stringify(chats))}catch(e){setNote("Could not save chat history in this browser.",true)}}
 function load(){
   try{chats=JSON.parse(localStorage.getItem(LS_KEY))||[]}catch(e){chats=[]}
   if(!Array.isArray(chats))chats=[];
@@ -140,7 +140,7 @@ function renderList(){
   chats.forEach(c=>{
     const d=document.createElement("div");d.className="chat-item"+(c.id===currentId?" active":"");
     const t=document.createElement("span");t.className="t";t.textContent=c.title;
-    const del=document.createElement("button");del.className="del";del.textContent="🗑";del.title="চ্যাট মোছো";
+    const del=document.createElement("button");del.className="del";del.textContent="🗑";del.title="Delete chat";
     del.onclick=e=>{e.stopPropagation();deleteChat(c.id)};
     d.append(t,del);d.onclick=()=>{currentId=c.id;renderList();renderChat();closeDrawer()};
     listEl.appendChild(d);
@@ -151,13 +151,13 @@ function deleteChat(id){
   if(currentId===id)currentId=chats[0].id;
   save();renderList();renderChat();
 }
-const CHIPS=["বাংলাদেশ সেনাবাহিনী সম্পর্কে বলো","নৌবাহিনী আর বিমান বাহিনীর মধ্যে পার্থক্য কী?","একটা ছোট গল্প লেখো","ইংরেজি শেখার টিপস দাও"];
+const CHIPS=["Tell me about the Bangladesh Army","Compare the Navy and Air Force","Write a short story","Give me tips for learning English"];
 function renderChat(){
   const c=current();chatEl.innerHTML="";
   if(!c||!c.messages.length){
     const w=document.createElement("div");w.className="welcome";
-    const big=document.createElement("div");big.className="big";big.textContent="কি জানতে চাও, Nirob? 👋";
-    const sub=document.createElement("div");sub.className="sub";sub.textContent="বাংলায় বা Banglish-এ প্রশ্ন করলেই উত্তর পাবে। নিচের যেকোনো একটা চেপে শুরু করো —";
+    const big=document.createElement("div");big.className="big";big.textContent="How can I help you today? 👋";
+    const sub=document.createElement("div");sub.className="sub";sub.textContent="Ask in Bangla, Banglish, or English. I’ll reply in the language you use.";
     const box=document.createElement("div");box.className="chips";
     CHIPS.forEach(text=>{const b=document.createElement("button");b.className="chip glass";b.textContent=text;b.onclick=()=>{inputEl.value=text;send()};box.appendChild(b)});
     w.append(big,sub,box);chatEl.appendChild(w);return;
@@ -171,9 +171,9 @@ function msgEl(role,text){
   const b=document.createElement("div");b.className="bubble"+(role==="ai"?" glass":"");b.textContent=text;inner.appendChild(b);
   if(role==="ai"){
     const tools=document.createElement("div");tools.className="tools";
-    const speak=document.createElement("button");speak.className="tool-btn";speak.textContent="🔊 শোনো";speak.onclick=()=>toggleSpeak(text,speak);
-    const copy=document.createElement("button");copy.className="tool-btn";copy.textContent="📋 কপি করো";
-    copy.onclick=async()=>{try{await navigator.clipboard.writeText(text);copy.textContent="✓ কপি হয়েছে"}catch(e){setNote("কপি করা যায়নি।",true)}setTimeout(()=>copy.textContent="📋 কপি করো",1500)};
+    const speak=document.createElement("button");speak.className="tool-btn";speak.textContent="🔊 Listen";speak.onclick=()=>toggleSpeak(text,speak);
+    const copy=document.createElement("button");copy.className="tool-btn";copy.textContent="📋 Copy";
+    copy.onclick=async()=>{try{await navigator.clipboard.writeText(text);copy.textContent="✓ Copied"}catch(e){setNote("Could not copy the message.",true)}setTimeout(()=>copy.textContent="📋 Copy",1500)};
     tools.append(speak,copy);inner.appendChild(tools);
   }
   wrap.appendChild(inner);return wrap;
@@ -182,7 +182,7 @@ function showTyping(){
   const wrap=document.createElement("div");wrap.className="msg ai";wrap.id="typingWrap";
   const inner=document.createElement("div");inner.className="message-inner";
   const b=document.createElement("div");b.className="bubble glass";
-  const label=document.createElement("span");label.style.cssText="font-size:13px;color:var(--muted);margin-right:8px";label.textContent="Nirob AI লিখছে";
+  const label=document.createElement("span");label.style.cssText="font-size:13px;color:var(--muted);margin-right:8px";label.textContent="Nirob AI is thinking";
   const dots=document.createElement("span");dots.className="typing";dots.innerHTML="<i></i><i></i><i></i>";
   b.append(label,dots);inner.appendChild(b);wrap.appendChild(inner);chatEl.appendChild(wrap);scrollDown();
 }
@@ -201,14 +201,14 @@ async function send(){
       body:JSON.stringify({messages:c.messages.slice(-16)})
     });
     const data=await response.json().catch(()=>({}));
-    if(!response.ok)throw new Error(data.error||"সার্ভারে সংযোগ করা যায়নি।");
-    if(typeof data.answer!=="string"||!data.answer.trim())throw new Error("AI খালি উত্তর দিয়েছে। আবার চেষ্টা করো।");
+    if(!response.ok)throw new Error(data.error||"Could not connect to the AI service. Please try again.");
+    if(typeof data.answer!=="string"||!data.answer.trim())throw new Error("The assistant returned an empty reply. Please try again.");
     hideTyping();const answer=data.answer.trim();c.messages.push({role:"ai",text:answer});
     chatEl.appendChild(msgEl("ai",answer));save();scrollDown();
   }catch(error){
     hideTyping();const msg=error&&error.message?error.message:"অজানা সমস্যা হয়েছে।";
-    c.messages.push({role:"ai",text:"দুঃখিত, উত্তর পাওয়া যায়নি। "+msg});save();
-    chatEl.appendChild(msgEl("ai","দুঃখিত, উত্তর পাওয়া যায়নি। "+msg));scrollDown();setNote(msg,true);
+    c.messages.push({role:"ai",text:"Sorry, I couldn’t get a reply. "+msg});save();
+    chatEl.appendChild(msgEl("ai","Sorry, I couldn’t get a reply. "+msg));scrollDown();setNote(msg,true);
   }finally{busy=false;inputEl.focus()}
 }
 function autosize(){inputEl.style.height="auto";inputEl.style.height=Math.min(inputEl.scrollHeight,130)+"px"}
@@ -218,32 +218,32 @@ $("#composer").addEventListener("submit",e=>{e.preventDefault();send()});
 
 function stopSpeak(){
   if(window.speechSynthesis)speechSynthesis.cancel();speaking=false;
-  document.querySelectorAll(".tool-btn").forEach(b=>{if(b.textContent.includes("থামাও"))b.textContent="🔊 শোনো"});
+  document.querySelectorAll(".tool-btn").forEach(b=>{if(b.textContent.includes("Stop"))b.textContent="🔊 Listen"});
 }
 function toggleSpeak(text,btn){
-  if(!window.speechSynthesis){setNote("এই ব্রাউজারে TTS নেই।",true);return}
+  if(!window.speechSynthesis){setNote("Text-to-speech is not supported in this browser.",true);return}
   if(speaking){stopSpeak();return}
   const u=new SpeechSynthesisUtterance(text);const voices=speechSynthesis.getVoices();
   const bn=voices.find(v=>/^bn/i.test(v.lang))||voices.find(v=>/bengali|bangla/i.test(v.name));
   if(bn){u.voice=bn;u.lang=bn.lang}else u.lang="bn-BD";
-  speaking=true;btn.textContent="⏹ থামাও";
-  u.onend=u.onerror=()=>{speaking=false;btn.textContent="🔊 শোনো"};
+  speaking=true;btn.textContent="⏹ Stop";
+  u.onend=u.onerror=()=>{speaking=false;btn.textContent="🔊 Listen"};
   speechSynthesis.speak(u);
 }
 let ignoreMicEnd=false;
 async function toggleMic(){
   if(listening){stopMic();return}
-  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){setNote("মাইকের অনুমতি নিতে Chrome/Edge-এ HTTPS বা localhost ব্যবহার করো।",true);return}
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){setNote("Voice input requires HTTPS or localhost. Open this site in Chrome or Edge.",true);return}
   try{micStream=await navigator.mediaDevices.getUserMedia({audio:true})}
-  catch(e){setNote("মাইকের অনুমতি পাওয়া যায়নি। Browser Site Settings-এ Microphone → Allow করো।",true);return}
+  catch(e){setNote("Microphone permission was denied. Allow microphone access in your browser site settings.",true);return}
   const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!SR){micStream.getTracks().forEach(t=>t.stop());micStream=null;setNote("এই ব্রাউজারে Speech Recognition সাপোর্ট নেই। Chrome-এ চেষ্টা করো।",true);return}
+  if(!SR){micStream.getTracks().forEach(t=>t.stop());micStream=null;setNote("Voice typing is not supported in this browser. Please try Chrome.",true);return}
   recog=new SR();recog.lang="bn-BD";recog.interimResults=true;recog.continuous=false;
   const base=inputEl.value?inputEl.value.replace(/\s+$/,"")+" ":"";
   recog.onresult=e=>{let txt="";for(const r of e.results)txt+=r[0].transcript;inputEl.value=base+txt;autosize()};
-  recog.onerror=e=>{if(e.error==="not-allowed")setNote("মাইকের অনুমতি বন্ধ আছে।",true);else if(e.error!=="aborted")setNote("ভয়েস শোনা যায়নি। আবার চেষ্টা করো।",true);stopMic()};
+  recog.onerror=e=>{if(e.error==="not-allowed")setNote("Microphone permission is blocked. Allow it in your browser settings.",true);else if(e.error!=="aborted")setNote("Voice input failed. Please try again.",true);stopMic()};
   recog.onend=()=>{if(listening)stopMic()};
-  try{recog.start();listening=true;$("#micBtn").classList.add("recording");$("#eq").style.display="flex";setNote("🎙️ শুনছি… বাংলায় বলো।")}
+  try{recog.start();listening=true;$("#micBtn").classList.add("recording");$("#eq").style.display="flex";setNote("🎙️ Listening… Speak now.")}
   catch(e){stopMic()}
 }
 function stopMic(){
