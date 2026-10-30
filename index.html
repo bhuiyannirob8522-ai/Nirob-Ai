@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#eef6ee">
+<title>Nirob AI — বাংলায় AI চ্যাট</title>
+<style>
+:root{
+  --bg:#eef6ee;--ink:#14231a;--muted:#5b6f62;--glass:rgba(255,255,255,.55);
+  --glass-strong:rgba(255,255,255,.82);--stroke:rgba(255,255,255,.7);
+  --shadow:0 8px 32px rgba(20,60,35,.14);--accent:#1a9e54;--accent2:#f2a007;
+  --user-bubble:rgba(26,158,84,.9);--danger:#e5484d;--chip:rgba(255,255,255,.5);
+}
+body.dark{
+  --bg:#0c1510;--ink:#e8f3ea;--muted:#9db4a5;--glass:rgba(22,38,29,.62);
+  --glass-strong:rgba(24,42,32,.92);--stroke:rgba(255,255,255,.14);
+  --shadow:0 8px 32px rgba(0,0,0,.45);--chip:rgba(255,255,255,.08);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:"Hind Siliguri","Noto Sans Bengali",system-ui,-apple-system,"Segoe UI",sans-serif;background:var(--bg);color:var(--ink);overflow:hidden;-webkit-font-smoothing:antialiased}
+button{font:inherit}
+.blob{position:fixed;border-radius:50%;filter:blur(70px);opacity:.55;z-index:0;pointer-events:none}
+.blob.g{width:46vmax;height:46vmax;background:#8fe3ae;top:-14vmax;left:-10vmax}
+.blob.a{width:38vmax;height:38vmax;background:#ffd97a;bottom:-12vmax;right:-8vmax}
+.blob.t{width:26vmax;height:26vmax;background:#9adbe8;bottom:8vmax;left:22vw;opacity:.35}
+body.dark .blob{opacity:.18}
+.glass{background:var(--glass);backdrop-filter:blur(18px) saturate(1.5);-webkit-backdrop-filter:blur(18px) saturate(1.5);border:1px solid var(--stroke);box-shadow:var(--shadow)}
+#app{position:relative;z-index:1;display:flex;flex-direction:column;height:100dvh;max-width:900px;margin:0 auto}
+header{display:flex;align-items:center;gap:10px;padding:12px 14px;margin:10px 10px 0;border-radius:20px;position:relative;z-index:5}
+.logo{width:40px;height:40px;border-radius:14px;flex:0 0 auto;display:grid;place-items:center;background:linear-gradient(135deg,var(--accent),#0d6e36);color:#fff;font-weight:800;font-size:19px;box-shadow:0 6px 16px rgba(26,158,84,.35)}
+header h1{font-size:19px;line-height:1.1}header p{font-size:12px;color:var(--muted)}
+.spacer{flex:1}
+.icon-btn{width:40px;height:40px;border-radius:13px;border:1px solid var(--stroke);background:var(--chip);color:var(--ink);font-size:18px;cursor:pointer;display:grid;place-items:center}
+.icon-btn:active{transform:scale(.94)}
+#chat{flex:1;overflow-y:auto;padding:18px 14px 8px;scroll-behavior:smooth}
+.welcome{text-align:center;padding:34px 8px 10px;animation:fadeUp .5s ease}
+.welcome .big{font-size:27px;font-weight:800;margin-bottom:8px}
+.welcome .sub{color:var(--muted);font-size:15px;margin:0 auto 20px;max-width:560px}
+.chips{display:flex;flex-wrap:wrap;gap:9px;justify-content:center}
+.chip{padding:10px 15px;border-radius:999px;font-size:14px;cursor:pointer;color:var(--ink);transition:transform .15s}
+.chip:hover{transform:translateY(-2px)}
+.msg{display:flex;margin:12px 0;animation:fadeUp .3s ease}
+.msg.user{justify-content:flex-end}
+.message-inner{max-width:86%}
+.bubble{padding:12px 15px;border-radius:20px;font-size:15.5px;line-height:1.65;white-space:pre-wrap;overflow-wrap:anywhere}
+.msg.user .bubble{background:var(--user-bubble);color:#fff;border-bottom-right-radius:7px;box-shadow:0 6px 18px rgba(26,158,84,.3);border:1px solid rgba(255,255,255,.25)}
+.msg.ai .bubble{border-bottom-left-radius:7px}
+.msg .tools{display:flex;gap:6px;margin-top:7px}
+.tool-btn{font-size:12px;padding:5px 11px;border-radius:999px;border:1px solid var(--stroke);background:var(--chip);color:var(--ink);cursor:pointer}
+@keyframes fadeUp{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}
+.typing{display:inline-flex;gap:5px;align-items:center;padding:4px 2px}
+.typing i{width:8px;height:8px;border-radius:50%;background:var(--accent);display:block;animation:bounce 1.1s infinite}
+.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
+@keyframes bounce{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-6px);opacity:1}}
+#composer{margin:6px 10px calc(10px + env(safe-area-inset-bottom));border-radius:22px;padding:9px;display:flex;align-items:flex-end;gap:8px;position:relative;z-index:5}
+#input{flex:1;min-width:0;border:none;outline:none;background:transparent;color:var(--ink);resize:none;font:inherit;font-size:15.5px;max-height:130px;padding:9px 6px;line-height:1.45}
+#input::placeholder{color:var(--muted)}
+#micBtn.recording{background:var(--danger)!important;color:#fff;border-color:transparent;animation:pulse 1s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(229,72,77,.5)}100%{box-shadow:0 0 0 15px rgba(229,72,77,0)}}
+.eq{display:none;align-items:flex-end;gap:3px;height:22px;padding:0 4px}
+.eq i{width:4px;background:var(--danger);border-radius:2px;animation:eq .7s infinite}
+.eq i:nth-child(1){height:9px}.eq i:nth-child(2){height:18px;animation-delay:.12s}.eq i:nth-child(3){height:12px;animation-delay:.24s}.eq i:nth-child(4){height:20px;animation-delay:.36s}
+@keyframes eq{0%,100%{transform:scaleY(.5)}50%{transform:scaleY(1.15)}}
+#sendBtn{background:linear-gradient(135deg,var(--accent),#0d6e36);color:#fff;border:none;box-shadow:0 6px 16px rgba(26,158,84,.35)}
+#note{font-size:12.5px;color:var(--muted);text-align:center;padding:0 18px 10px;min-height:18px}
+#note.err{color:var(--danger)}
+#scrim{position:fixed;inset:0;background:rgba(8,20,12,.4);z-index:20;opacity:0;pointer-events:none;transition:.25s}
+#scrim.on{opacity:1;pointer-events:auto}
+#drawer{position:fixed;top:0;left:0;bottom:0;width:min(320px,86vw);z-index:21;transform:translateX(-105%);transition:transform .3s ease;display:flex;flex-direction:column;padding:16px 14px;border-radius:0 24px 24px 0}
+#drawer.on{transform:none}
+#drawer h2{font-size:17px;margin:2px 2px 12px}
+#newBtn{width:100%;padding:12px;border-radius:14px;border:none;cursor:pointer;font:inherit;font-weight:700;background:linear-gradient(135deg,var(--accent),#0d6e36);color:#fff;margin-bottom:12px}
+#chatList{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:7px}
+.chat-item{padding:11px 13px;border-radius:14px;cursor:pointer;font-size:14px;display:flex;align-items:center;gap:8px;border:1px solid transparent}
+.chat-item:hover{background:var(--chip)}.chat-item.active{background:var(--chip);border-color:var(--stroke)}
+.chat-item .t{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chat-item .del{color:var(--muted);background:none;border:none;font-size:15px;cursor:pointer;padding:2px 4px}
+.status{margin-top:12px;padding:11px 13px;border-radius:14px;font-size:12.5px;color:var(--muted);line-height:1.6}
+.status b{color:var(--ink)}.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent);margin-right:6px}
+@media(max-width:520px){.message-inner{max-width:90%}header h1{font-size:17px}.welcome .big{font-size:23px}}
+</style>
+</head>
+<body>
+<div class="blob g"></div><div class="blob a"></div><div class="blob t"></div>
+<div id="app">
+  <header class="glass">
+    <button class="icon-btn" id="menuBtn" aria-label="মেনু">☰</button>
+    <div class="logo">N</div>
+    <div><h1>Nirob AI</h1><p>বাংলায় AI চ্যাট সহায়ক · Gemini</p></div>
+    <div class="spacer"></div>
+    <button class="icon-btn" id="themeBtn" aria-label="থিম বদলাও">🌙</button>
+  </header>
+  <main id="chat" aria-live="polite"></main>
+  <div id="note"></div>
+  <form id="composer">
+    <button type="button" class="icon-btn" id="micBtn" aria-label="ভয়েস টাইপ">🎤</button>
+    <div class="eq" id="eq"><i></i><i></i><i></i><i></i></div>
+    <textarea id="input" rows="1" placeholder="এখানে লেখো, Nirob…"></textarea>
+    <button type="submit" class="icon-btn" id="sendBtn" aria-label="পাঠাও">➤</button>
+  </form>
+</div>
+<div id="scrim"></div>
+<aside id="drawer" class="glass">
+  <h2>💬 চ্যাট ইতিহাস</h2>
+  <button id="newBtn">＋ নতুন চ্যাট</button>
+  <div id="chatList"></div>
+  <div class="status glass"><span class="dot"></span><b>Gemini 3.8 Flash</b><br>API key সার্ভারে নিরাপদে রাখতে হবে।</div>
+</aside>
+<script>
+"use strict";
+const $=s=>document.querySelector(s);
+const chatEl=$("#chat"),listEl=$("#chatList"),inputEl=$("#input"),noteEl=$("#note");
+const LS_KEY="nirob-ai-html-chats-v2",LS_THEME="nirob-ai-html-theme";
+let chats=[],currentId=null,busy=false,speaking=false,recog=null,listening=false,micStream=null;
+
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
+function save(){try{localStorage.setItem(LS_KEY,JSON.stringify(chats))}catch(e){setNote("চ্যাট সংরক্ষণ করা যায়নি।",true)}}
+function load(){
+  try{chats=JSON.parse(localStorage.getItem(LS_KEY))||[]}catch(e){chats=[]}
+  if(!Array.isArray(chats))chats=[];
+  if(!chats.length)newChat(false);
+  currentId=chats[0].id;
+}
+function current(){return chats.find(c=>c.id===currentId)}
+function newChat(render=true){
+  const c={id:uid(),title:"নতুন চ্যাট",messages:[]};
+  chats.unshift(c);currentId=c.id;save();
+  if(render){renderList();renderChat()}
+}
+function titleFrom(text){const t=text.trim().replace(/\s+/g," ");return t.length>30?t.slice(0,30)+"…":t}
+function scrollDown(){chatEl.scrollTop=chatEl.scrollHeight}
+function setNote(msg,err){
+  noteEl.textContent=msg||"";noteEl.className=err?"err":"";
+  if(msg)setTimeout(()=>{if(noteEl.textContent===msg){noteEl.textContent="";noteEl.className=""}},7000)
+}
+function renderList(){
+  listEl.innerHTML="";
+  chats.forEach(c=>{
+    const d=document.createElement("div");d.className="chat-item"+(c.id===currentId?" active":"");
+    const t=document.createElement("span");t.className="t";t.textContent=c.title;
+    const del=document.createElement("button");del.className="del";del.textContent="🗑";del.title="চ্যাট মোছো";
+    del.onclick=e=>{e.stopPropagation();deleteChat(c.id)};
+    d.append(t,del);d.onclick=()=>{currentId=c.id;renderList();renderChat();closeDrawer()};
+    listEl.appendChild(d);
+  });
+}
+function deleteChat(id){
+  chats=chats.filter(c=>c.id!==id);if(!chats.length)newChat(false);
+  if(currentId===id)currentId=chats[0].id;
+  save();renderList();renderChat();
+}
+const CHIPS=["বাংলাদেশ সেনাবাহিনী সম্পর্কে বলো","নৌবাহিনী আর বিমান বাহিনীর মধ্যে পার্থক্য কী?","একটা ছোট গল্প লেখো","ইংরেজি শেখার টিপস দাও"];
+function renderChat(){
+  const c=current();chatEl.innerHTML="";
+  if(!c||!c.messages.length){
+    const w=document.createElement("div");w.className="welcome";
+    const big=document.createElement("div");big.className="big";big.textContent="কি জানতে চাও, Nirob? 👋";
+    const sub=document.createElement("div");sub.className="sub";sub.textContent="বাংলায় বা Banglish-এ প্রশ্ন করলেই উত্তর পাবে। নিচের যেকোনো একটা চেপে শুরু করো —";
+    const box=document.createElement("div");box.className="chips";
+    CHIPS.forEach(text=>{const b=document.createElement("button");b.className="chip glass";b.textContent=text;b.onclick=()=>{inputEl.value=text;send()};box.appendChild(b)});
+    w.append(big,sub,box);chatEl.appendChild(w);return;
+  }
+  c.messages.forEach(m=>chatEl.appendChild(msgEl(m.role,m.text)));
+  scrollDown();
+}
+function msgEl(role,text){
+  const wrap=document.createElement("div");wrap.className="msg "+(role==="user"?"user":"ai");
+  const inner=document.createElement("div");inner.className="message-inner";
+  const b=document.createElement("div");b.className="bubble"+(role==="ai"?" glass":"");b.textContent=text;inner.appendChild(b);
+  if(role==="ai"){
+    const tools=document.createElement("div");tools.className="tools";
+    const speak=document.createElement("button");speak.className="tool-btn";speak.textContent="🔊 শোনো";speak.onclick=()=>toggleSpeak(text,speak);
+    const copy=document.createElement("button");copy.className="tool-btn";copy.textContent="📋 কপি করো";
+    copy.onclick=async()=>{try{await navigator.clipboard.writeText(text);copy.textContent="✓ কপি হয়েছে"}catch(e){setNote("কপি করা যায়নি।",true)}setTimeout(()=>copy.textContent="📋 কপি করো",1500)};
+    tools.append(speak,copy);inner.appendChild(tools);
+  }
+  wrap.appendChild(inner);return wrap;
+}
+function showTyping(){
+  const wrap=document.createElement("div");wrap.className="msg ai";wrap.id="typingWrap";
+  const inner=document.createElement("div");inner.className="message-inner";
+  const b=document.createElement("div");b.className="bubble glass";
+  const label=document.createElement("span");label.style.cssText="font-size:13px;color:var(--muted);margin-right:8px";label.textContent="Nirob AI লিখছে";
+  const dots=document.createElement("span");dots.className="typing";dots.innerHTML="<i></i><i></i><i></i>";
+  b.append(label,dots);inner.appendChild(b);wrap.appendChild(inner);chatEl.appendChild(wrap);scrollDown();
+}
+function hideTyping(){const el=$("#typingWrap");if(el)el.remove()}
+async function send(){
+  const text=inputEl.value.trim();if(!text||busy)return;
+  busy=true;stopSpeak();const c=current();
+  const welcome=chatEl.querySelector(".welcome");if(welcome)welcome.remove();
+  c.messages.push({role:"user",text});
+  if(c.messages.filter(m=>m.role==="user").length===1)c.title=titleFrom(text);
+  chatEl.appendChild(msgEl("user",text));scrollDown();
+  inputEl.value="";autosize();save();renderList();showTyping();
+  try{
+    const response=await fetch("/api/chat",{
+      method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({messages:c.messages.slice(-16)})
+    });
+    const data=await response.json().catch(()=>({}));
+    if(!response.ok)throw new Error(data.error||"সার্ভারে সংযোগ করা যায়নি।");
+    if(typeof data.answer!=="string"||!data.answer.trim())throw new Error("AI খালি উত্তর দিয়েছে। আবার চেষ্টা করো।");
+    hideTyping();const answer=data.answer.trim();c.messages.push({role:"ai",text:answer});
+    chatEl.appendChild(msgEl("ai",answer));save();scrollDown();
+  }catch(error){
+    hideTyping();const msg=error&&error.message?error.message:"অজানা সমস্যা হয়েছে।";
+    c.messages.push({role:"ai",text:"দুঃখিত, উত্তর পাওয়া যায়নি। "+msg});save();
+    chatEl.appendChild(msgEl("ai","দুঃখিত, উত্তর পাওয়া যায়নি। "+msg));scrollDown();setNote(msg,true);
+  }finally{busy=false;inputEl.focus()}
+}
+function autosize(){inputEl.style.height="auto";inputEl.style.height=Math.min(inputEl.scrollHeight,130)+"px"}
+inputEl.addEventListener("input",autosize);
+inputEl.addEventListener("keydown",e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();send()}});
+$("#composer").addEventListener("submit",e=>{e.preventDefault();send()});
+
+function stopSpeak(){
+  if(window.speechSynthesis)speechSynthesis.cancel();speaking=false;
+  document.querySelectorAll(".tool-btn").forEach(b=>{if(b.textContent.includes("থামাও"))b.textContent="🔊 শোনো"});
+}
+function toggleSpeak(text,btn){
+  if(!window.speechSynthesis){setNote("এই ব্রাউজারে TTS নেই।",true);return}
+  if(speaking){stopSpeak();return}
+  const u=new SpeechSynthesisUtterance(text);const voices=speechSynthesis.getVoices();
+  const bn=voices.find(v=>/^bn/i.test(v.lang))||voices.find(v=>/bengali|bangla/i.test(v.name));
+  if(bn){u.voice=bn;u.lang=bn.lang}else u.lang="bn-BD";
+  speaking=true;btn.textContent="⏹ থামাও";
+  u.onend=u.onerror=()=>{speaking=false;btn.textContent="🔊 শোনো"};
+  speechSynthesis.speak(u);
+}
+let ignoreMicEnd=false;
+async function toggleMic(){
+  if(listening){stopMic();return}
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){setNote("মাইকের অনুমতি নিতে Chrome/Edge-এ HTTPS বা localhost ব্যবহার করো।",true);return}
+  try{micStream=await navigator.mediaDevices.getUserMedia({audio:true})}
+  catch(e){setNote("মাইকের অনুমতি পাওয়া যায়নি। Browser Site Settings-এ Microphone → Allow করো।",true);return}
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!SR){micStream.getTracks().forEach(t=>t.stop());micStream=null;setNote("এই ব্রাউজারে Speech Recognition সাপোর্ট নেই। Chrome-এ চেষ্টা করো।",true);return}
+  recog=new SR();recog.lang="bn-BD";recog.interimResults=true;recog.continuous=false;
+  const base=inputEl.value?inputEl.value.replace(/\s+$/,"")+" ":"";
+  recog.onresult=e=>{let txt="";for(const r of e.results)txt+=r[0].transcript;inputEl.value=base+txt;autosize()};
+  recog.onerror=e=>{if(e.error==="not-allowed")setNote("মাইকের অনুমতি বন্ধ আছে।",true);else if(e.error!=="aborted")setNote("ভয়েস শোনা যায়নি। আবার চেষ্টা করো।",true);stopMic()};
+  recog.onend=()=>{if(listening)stopMic()};
+  try{recog.start();listening=true;$("#micBtn").classList.add("recording");$("#eq").style.display="flex";setNote("🎙️ শুনছি… বাংলায় বলো।")}
+  catch(e){stopMic()}
+}
+function stopMic(){
+  listening=false;
+  if(recog){const r=recog;recog=null;try{r.stop()}catch(e){}}
+  if(micStream){micStream.getTracks().forEach(t=>t.stop());micStream=null}
+  $("#micBtn").classList.remove("recording");$("#eq").style.display="none";
+}
+$("#micBtn").addEventListener("click",toggleMic);
+const drawer=$("#drawer"),scrim=$("#scrim");
+function openDrawer(){renderList();drawer.classList.add("on");scrim.classList.add("on")}
+function closeDrawer(){drawer.classList.remove("on");scrim.classList.remove("on")}
+$("#menuBtn").addEventListener("click",openDrawer);scrim.addEventListener("click",closeDrawer);
+$("#newBtn").addEventListener("click",()=>{newChat();closeDrawer();inputEl.focus()});
+function applyTheme(dark){
+  document.body.classList.toggle("dark",dark);$("#themeBtn").textContent=dark?"☀️":"🌙";
+  try{localStorage.setItem(LS_THEME,dark?"dark":"light")}catch(e){}
+}
+$("#themeBtn").addEventListener("click",()=>applyTheme(!document.body.classList.contains("dark")));
+load();applyTheme((()=>{try{return localStorage.getItem(LS_THEME)==="dark"}catch(e){return false}})());
+renderList();renderChat();
+</script>
+</body>
+</html>
