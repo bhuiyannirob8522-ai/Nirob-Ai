@@ -1,37 +1,39 @@
 # Nirob AI
 
-A Bengali-first AI chat app powered by the Gemini API.
+Nirob AI is a personal AI chat assistant with an English interface and support for Bangla, Banglish, and English conversations.
 
-## Run locally
+## Features
+
+- Responsive chat interface with light and dark themes
+- Conversation history saved in the browser
+- Voice input and read-aloud support, depending on browser capabilities
+- Server-side AI requests so the API key is not exposed in the browser
+
+## Local development
 
 1. Install Node.js and the Vercel CLI.
-2. In this project folder, create a local environment file named `.env.local` with:
+2. Create a `.env.local` file in the project root:
 
 ```bash
-GEMINI_API_KEY=your_new_gemini_api_key
+GEMINI_API_KEY=your_api_key
 ```
 
-3. Run:
+3. Start the local development server:
 
 ```bash
 vercel dev
 ```
 
-Open the local URL printed by Vercel.
+## Deployment
 
-## Deploy
+Import this repository into Vercel. Add `GEMINI_API_KEY` as a sensitive environment variable for Production, Preview, and Development, then redeploy.
 
-Import this GitHub repository into Vercel. In the Vercel project settings, add the environment variable `GEMINI_API_KEY` (Production, Preview, and Development as needed), then redeploy.
+Never put the API key in `index.html`, commit it to GitHub, or share it publicly.
 
-The API key is intentionally not stored in this repository or the browser. Never commit `.env.local`.
-
-## Model
-
-The server endpoint uses `gemini-3.8-flash` through Google's Gemini `generateContent` API. Change `GEMINI_MODEL` in the Vercel environment if you want to select another compatible model.
+The server currently uses the stable `gemini-3.8-flash` model. The model is an implementation detail and is not shown in the app interface.
 
 ## Notes
 
-- Chat history is stored in the current browser's local storage.
-- Voice typing uses the browser's Speech Recognition support and may require microphone permission.
-- Read-aloud uses the browser's Speech Synthesis voices.
-- This is a starter personal app. For a public multi-user deployment, add authentication, usage limits, and abuse protection before sharing it widely.
+- Chat history is saved in the current browser's local storage.
+- Voice typing and read-aloud depend on available browser speech features.
+- Before making the app public to many users, add authentication, request limits, and abuse protection.
